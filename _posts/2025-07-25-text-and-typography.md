@@ -8,6 +8,12 @@ tag: [kernel]
 
 # 编译内核
 
+## 内核代码下载
+
+```bash
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+```
+
 ## 配置内核
 
 ```bash

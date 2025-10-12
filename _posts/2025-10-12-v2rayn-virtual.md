@@ -11,7 +11,6 @@ tag: [virtual, tools]
 ## 方法
 
 查看v2ray中局域网http端口
-
 ![alt text](../image.png)
 
 查看虚拟网卡的地址

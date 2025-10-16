@@ -10,9 +10,6 @@ tag: [virtual, tools]
 
 ## 方法
 
-查看v2ray中局域网http端口
-![alt text](../image.png)
-
 查看虚拟网卡的地址
 
 ```powershell
@@ -22,18 +19,35 @@ ipconfig
    子网掩码  . . . . . . . . . . . . : 255.255.255.0
 ```
 
+在bashrc中配置
+```bash
+# ~/.bashrc
+# add for proxy
+export hostip=$(ip route | grep default | awk '{print $3}')
+export hostport=10809
+alias proxy='
+    export HTTPS_PROXY="http://${hostip}:${hostport}";
+    export HTTP_PROXY="http://${hostip}:${hostport}";
+    export ALL_PROXY="http://${hostip}:${hostport}";
+    echo -e "Acquire::http::Proxy \"http://${hostip}:${hostport}\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null;
+    echo -e "Acquire::https::Proxy \"http://${hostip}:${hostport}\";" | sudo tee -a /etc/apt/apt.conf.d/proxy.conf > /dev/null;
+'
+alias unproxy='
+    unset HTTPS_PROXY;
+    unset HTTP_PROXY;
+    unset ALL_PROXY;
+    sudo sed -i -e '/Acquire::http::Proxy/d' /etc/apt/apt.conf.d/proxy.conf;
+'
+```
+
 在虚拟机中配置代理
 
 ```bash
-echo 'export http_proxy=http://192.168.124.1:10811
-export https_proxy=http://192.168.124.1:10811' > /etc/profile.d/proxy
-source /etc/profile.d/proxy
+proxy
 ```
 
 取消代理
 
 ```bash
-echo 'export http_proxy=
-export https_proxy=' > /etc/profile.d/proxy.disable
-source /etc/profile.d/proxy.disable
+unproxy
 ```

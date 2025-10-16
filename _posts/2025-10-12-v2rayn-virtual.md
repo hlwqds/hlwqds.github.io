@@ -51,3 +51,8 @@ proxy
 ```bash
 unproxy
 ```
+
+
+## wsl设置
+
+开始菜单搜索wsl setting，指定网络模式为mirrored模式

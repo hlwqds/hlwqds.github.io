@@ -12,4 +12,4 @@ tag: [pcap, collection]
 
 ### ftp乱序镜像流量
 
-[ftp_mirror_out_of_order](../ftp_mirror_out_of_order.pcap)
+[ftp_mirror_out_of_order](https://cdn.jsdelivr.net/gh/hlwqds/hlwqds.github.io@main/ftp_mirror_out_of_order.pcap)

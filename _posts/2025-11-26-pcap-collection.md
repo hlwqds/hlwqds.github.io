@@ -12,7 +12,10 @@ tag: [pcap, collection]
 
 ### ftp乱序镜像流量
 
+#### ftp fin后于数据包
+
 [ftp_mirror_out_of_order](https://cdn.jsdelivr.net/gh/hlwqds/hlwqds.github.io@main/ftp_mirror_out_of_order.pcap)
 
-握手乱序
+#### ftp 挥手也乱序
+
 [ftp_mirror_out_of_order_fin](https://cdn.jsdelivr.net/gh/hlwqds/hlwqds.github.io@main/ftp_mirror_out_of_order_fin.pcap)

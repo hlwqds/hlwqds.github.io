@@ -2,6 +2,7 @@
 layout: post
 title: Go Context 超时自动取消场景详解
 date: 2025-12-17 10:00:00 +0800
+pin: true
 categories: [go]
 tags: [go, context]
 ---

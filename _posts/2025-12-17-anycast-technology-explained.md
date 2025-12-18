@@ -2,6 +2,7 @@
 layout: post
 title: "任播 (Anycast) 技术详解"
 date: 2025-12-17 10:00:00 +0800
+pin: true
 categories: [Network]
 tags: [Anycast, Network, BGP, DNS, CDN, DDoS]
 ---

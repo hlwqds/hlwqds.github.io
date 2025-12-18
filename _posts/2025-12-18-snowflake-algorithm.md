@@ -1,7 +1,7 @@
 ---
 title: Snowflake 算法详解
 date: 2025-12-18 10:00:00
-pin: false
+pin: true
 categories: [algorithm, distributed-systems]
 tag: [snowflake, id-generator, distributed]
 ---
@@ -163,4 +163,3 @@ func main() {
 ## 总结
 
 Snowflake 算法是分布式 ID 生成的标准答案之一。理解其位运算逻辑和结构划分，有助于我们在实际业务中根据需求（如更高的并发、更长的寿命）对算法进行定制和优化。
-

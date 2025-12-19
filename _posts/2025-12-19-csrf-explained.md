@@ -2,6 +2,7 @@
 title: 跨站请求伪造 (CSRF) 详解：原理、调试与防御
 date: 2025-12-19 17:00:00
 categories: [security, web]
+pin: true
 tag: [csrf, vulnerability, backend, cookie]
 ---
 

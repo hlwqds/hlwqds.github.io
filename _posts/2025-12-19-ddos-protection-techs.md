@@ -2,6 +2,7 @@
 title: DDoS 防护技术全景：从 XDP 到应用层清洗
 date: 2025-12-19 18:00:00
 categories: [security, network, ddos]
+pin: true
 tag: [ddos, xdp, dpdk, waf, syn-flood, linux]
 ---
 

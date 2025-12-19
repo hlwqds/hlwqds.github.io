@@ -2,6 +2,7 @@
 title: lsof 网络排查实战：不仅是查看端口，更是系统透视眼
 date: 2025-12-19 19:00:00
 categories: [linux, tools, network, devops]
+pin: true
 tag: [lsof, troubleshooting, socket, process]
 ---
 

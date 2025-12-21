@@ -3,7 +3,8 @@ title: iptables-save 详解与应用
 date: 2025-12-22 10:00:00
 categories: [linux, networking]
 tag: [iptables, firewall, linux, ops]
-pin: false
+pin: true
+
 ---
 
 # iptables-save 详解与应用

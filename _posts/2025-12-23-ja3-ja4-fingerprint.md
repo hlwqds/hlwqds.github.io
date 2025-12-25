@@ -3,7 +3,7 @@ title: JA3 与 JA4 指纹详解：TLS 流量识别的进化
 date: 2025-12-23 10:00:00
 categories: [networking, security]
 tag: [ja3, ja4, tls, fingerprint, network-analysis]
-ping: true
+pin: true
 ---
 
 # JA3 与 JA4 指纹详解：TLS 流量识别的进化

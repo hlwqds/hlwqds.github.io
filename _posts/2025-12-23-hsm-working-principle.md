@@ -3,7 +3,7 @@ title: 密码机 (HSM) 工作原理与交互流程详解
 date: 2025-12-23 12:00:00
 categories: [security, cryptography]
 tag: [hsm, sdf, pkcs11, cryptography, gm]
-ping: true
+pin: true
 ---
 
 # 密码机 (HSM) 工作原理与交互流程详解

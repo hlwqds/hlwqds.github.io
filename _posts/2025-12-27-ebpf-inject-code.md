@@ -1,6 +1,6 @@
 ---
 title: eBPF 动态指令重写技术：原理与实践
-date: 2025-12-21 00:00:00
+date: 2025-12-27 00:00:00
 categories: [ebpf, performance]
 tag: [ebpf]
 pin: true

@@ -1,7 +1,6 @@
 ---
-layout: post
 title: "实战：使用 eCapture 捕获 gRPC 明文并在 Wireshark 中解密"
-date: 2025-12-31 09:00:00 +0800
+date: 2025-12-31 00:00:00
 categories: [network-analysis, ebpf, grpc]
 tags: [ecapture, wireshark, tls, grpc, troubleshooting]
 pin: true

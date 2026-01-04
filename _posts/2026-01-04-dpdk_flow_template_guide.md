@@ -2,7 +2,7 @@
 title: "DPDK Flow Template API (Hardware Steering) 深度指南"
 date: 2026-01-04 00:00:00
 categories: [dpdk]
-tags: [dpdk, rte_flow, hardware-steering, async]
+tags: [dpdk, flow-api, hardware-steering, template-api]
 pin: true
 ---
 
@@ -95,10 +95,13 @@ pin: true
     *   CPU 不等待，立即处理下一条指令。
 
 ### 5.2 Push & Pull 模式
-为了利用异步队列，应用需要显式调用两个操作：
+为了利用异步队列，应用通常涉及以下操作：
 
-1.  **Post (或者叫 Create)**：调用 `rte_flow_async_create()`。这只是将任务放进了软件队列，**还没有发给硬件**。
-2.  **Push**：调用 `rte_flow_push()`。将软件队列中的一批任务“刷”到网卡硬件（Doorbell）。
+1.  **Post (或者叫 Create)**：调用 `rte_flow_async_create()`。
+    *   该操作受 `struct rte_flow_op_attr` 中的 `postpone` 字段控制。
+    *   **如果 `postpone = 1`**：任务仅放进软件队列，**还没有发给硬件**。应用必须随后调用 `rte_flow_push()`。
+    *   **如果 `postpone = 0`**：任务会被立即提交到硬件（或由驱动隐式提交）。这就是为什么在某些示例（如 `flow_filtering`）中看不到显式 `push` 调用的原因。
+2.  **Push**：调用 `rte_flow_push()`。将软件队列中的一批任务“刷”到网卡硬件（Doorbell）。这在需要批量提交以优化性能时非常有用。
 3.  **Pull**：调用 `rte_flow_pull()`。查询硬件，回收已经完成的任务结果（Completion）。
 
 **性能秘诀**：通过 `Push` 批量提交任务，均摊了 PCIe 通信的开销（Doorbell Batching），从而实现了极高的吞吐量。

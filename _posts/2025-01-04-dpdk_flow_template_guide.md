@@ -1,8 +1,9 @@
 ---
 title: "DPDK Flow Template API (Hardware Steering) 深度指南"
-date: 2025-01-04 00:00:00
+date: 2026-01-04 00:00:00
 categories: [dpdk]
 tags: [dpdk, rte_flow, hardware-steering, async]
+pin: true
 ---
 
 # DPDK Flow Template API (Hardware Steering) 深度指南

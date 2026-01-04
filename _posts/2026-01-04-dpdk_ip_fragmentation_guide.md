@@ -88,7 +88,7 @@ pin: true
 sudo ./build/examples/dpdk-ip_fragmentation -l 1 -n 4 \
     --vdev=net_tap0,iface=dtap0 \
     --vdev=net_tap1,iface=dtap1 \
-    -- -p 3 -q 1
+    -- -p 3 -q 2
 ```
 
 ### 3.2 流量生成脚本 (`send_huge_pkt.py`)

@@ -57,3 +57,120 @@ tag: [suricata]
 **总结**：
 
 基于端口的检测在 Suricata 的协议识别中扮演了一个**至关重要的“智能筛选器”角色**。它主要通过**预配置和在探测解析器（PP）阶段进行目标性查找**来提高效率，而不是直接加速模式匹配（PM）。这种分层且智能的策略确保了 Suricata 能够高效而准确地识别网络流量中的应用层协议。
+
+---
+
+# Suricata AppLayer 协议识别完整流程
+
+本文档基于 Suricata 7.x/8.x 核心源码，详细解析应用层协议识别（AppLayer Detection）的全过程。
+
+## 1. 总体架构图
+
+```ascii
+数据包 (Payload)
+      |
+      v
++-----------------------------+
+| AppLayerProtoDetectGetProto |  <-- 核心入口
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  阶段 1: Pattern Matcher    |  (src/app-layer-detect-proto.c)
+|  (AC 自动机多模匹配)        |
++-------------+---------------+
+              |
+              +---> [命中特征] ---> 生成候选列表 (Candidate List)
+              |
+              v
++-----------------------------+
+|  阶段 2: 深度探测 (Probing) |  (src/app-layer-detect-proto.c)
+|  (遍历候选列表 + 无特征协议)|
++-------------+---------------+
+              |
+              +---> 调用 Rust/C probe 函数 (如 qhsm_probing_parser)
+              |
+              v
+      [ ALPROTO_XXX ]  (识别成功)
+              OR
+      [ ALPROTO_UNKNOWN ] (识别失败) -> 等下一个包
+```
+
+---
+
+## 2. 详细流程与代码路径
+
+### 阶段 0: 流量入口
+当 TCP 流重组出新的 Payload 数据块时，Flow Worker 线程会触发协议检测。
+
+*   **入口函数**: `AppLayerProtoDetectGetProto`
+*   **文件位置**: `src/app-layer-detect-proto.c`
+
+### 阶段 1: 模式匹配与即时锁定 (Pattern Matcher Phase)
+Suricata 首先运行 AC 自动机扫描 Payload。如果命中特征，逻辑会尝试 **即时锁定**。
+
+1.  **执行 PM**: 调用 `AppLayerProtoDetectPMGetProto`。
+2.  **验证签名**: 内部调用 `AppLayerProtoDetectPMMatchSignature`。
+    *   如果注册时绑定了探测函数 (`s->PPFunc != NULL`)，则在此处 **立刻执行** 该函数（如 `qhsm_probing_parser`）进行深度校验。
+    *   如果校验通过，返回协议 ID。
+3.  **直接返回**: 在 `AppLayerProtoDetectGetProto` 中，如果 `pm_matches > 0`，Suricata 会 **直接返回结果并锁定流**，完全跳过后续的 Probing Loop。
+
+### 阶段 2: 端口探测循环 (Probing Loop Phase)
+只有当 **阶段 1 没有任何命中** 时，才会进入此阶段。这是一个基于“端口映射”的搜索。
+
+1.  **查找端口**: 调用 `AppLayerProtoDetectPPGetProto`。
+    *   该函数会根据流的 `dp` (目标端口) 或 `sp` (源端口) 去查找已注册的探测器。
+2.  **执行遍历**: 在 `PPGetProto` 函数内，通过一个 `while(pe != NULL)` 循环遍历该端口下的所有协议探测器。
+3.  **锁定**: 只要有一个探测器返回成功，即锁定协议并返回。
+
+---
+
+## 3. 关键总结：架构逻辑的真相
+
+根据 `src/app-layer-detect-proto.c` 的源码，目前的架构设计如下：
+
+| 特性 | **Pattern Matcher (PM)** | **Probing Parser (PP)** |
+| :--- | :--- | :--- |
+| **触发时机** | 数据包到达的首选方案 | 仅在 PM 无命中的情况下触发 |
+| **匹配依据** | 预定义的字节特征 (指纹) | 端口号 (Port Map) |
+| **验证逻辑** | 如果注册了 `PPFunc`，则在 PM 时同步执行校验 | 遍历该端口下挂载的所有探测器函数 |
+| **性能优势** | 快速排除法，命中即锁定 | 精准缩小范围 (只扫特定端口的嫌疑协议) |
+
+---
+
+## 4. 针对 QHSM 的架构建议 (基于最新源码分析)
+
+基于“命中即返回”的特性，QHSM 存在两种配置策略：
+
+### 方案 A：纯 Probing 模式 (当前现状)
+*   **不注册 Pattern**。
+*   **流程**：PM 阶段跳过 -> 进入 Probing 阶段 -> 检查端口是否为 6666 -> 是 -> 执行 `qhsm_probing_parser`。
+*   **优点**：最安全，逻辑最清晰。
+
+### 方案 B：PM + Probing 联合模式 (优化建议)
+*   **注册 Pattern** (`|00 00|` at offset 2) 并 **必须绑定** `qhsm_probing_parser`。
+*   **流程**：PM 阶段扫描到 `00 00` -> 在 PM 内部立即调用 `qhsm_probing_parser` 校验 -> 校验成功 -> 直接返回并锁定。
+*   **优点**：如果 QHSM 跑在非 6666 端口，这种方式可以比纯 Probing 模式更早、更高效地识别出协议。
+*   **注意**：这种模式下，如果包里没有 `00 00`，QHSM 将永远不会被探测（即使端口是 6666）。
+
+---
+
+## 5. 架构权衡：为什么 QHSM 可能不适合注册 Pattern
+
+在 Suricata 架构下，注册 Pattern (宽口) 是一把双刃剑。针对 QHSM 协议，建议 **不要注册 Pattern**，原因如下：
+
+### 1. "饿死" 风险 (Starvation)
+Suricata 的探测逻辑是：如果一个协议注册了 Pattern 但在数据包中未匹配，该流将 **永久失去** 被该协议探测的机会。如果 QHSM 存在任何不包含 `00 00` 的变体包头，或者未来协议升级，注册 Pattern 会导致严重的漏检。
+
+### 2. "泛滥" 风险 (Generic Pattern)
+`00 00` 特征过于宽泛。在全量流量中，大量的非 QHSM 数据包（如加密流、二进制文件传输）在 offset 2 位置都可能随机出现 `00 00`。
+*   这会导致 QHSM 的 `probe` 函数频繁被无效触发。
+*   相比之下，不注册 Pattern，流量只有在过滤掉 HTTP/TLS/SSH 等强特征协议后才会进入 QHSM 探测，反而可能更清净。
+
+### 3. 兼容性风险 (Forward Compatibility)
+如果您计划未来支持 **Midstream (流中识别)**，Pattern Matcher 通常只能匹配固定位置的特征（如 offset 2）。这会限制解析器在流的任意位置寻找合法同步头的能力。
+
+### 结论与建议
+对于 QHSM 这种二进制私有协议：
+*   **最佳实践**：保持不注册 Pattern，利用 Suricata 的兜底探测机制。
+*   **优化手段**：将核心识别逻辑写在 `qhsm_probing_parser` 内部，通过校验 Length 字段的合法性、OpCode 范围以及 CRC（如果有）来实现高精度识别。
